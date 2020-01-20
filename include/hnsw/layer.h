@@ -1,34 +1,47 @@
 #pragma once
 
 #include <memory>
+#include <mutex>
 #include <vector>
 
 #include "node.h"
 
 namespace hnsw {
 
-    template<typename key_t,
-             typename data_t>
+    template<typename id_type,
+             typename data_t,
+             typename node_t>
     class LayerInterface {
-        using node_t = std::unique_ptr<NodeInterface<key_t,data_t>>;
-
     public:
 
-        virtual void addNode(node_t) = 0;
-        virtual void deleteNode(node_t) = 0;
-
-    protected:
-    
-        node_t nodes;
+        virtual void addNode(std::unique_ptr<node_t> node) = 0;
+        virtual void deleteNode(std::unique_ptr<node_t> node) = 0;
 
     };
 
-    template<typename key_t,
-             typename data_t>
-    class BasicLayer : public LayerInterface<key_t,data_t> {
+    template<typename id_type,
+             typename data_t,
+             typename node_t>
+    class BasicLayer : public LayerInterface<id_type,data_t,node_t> {
     public:
 
+        BasicLayer() {}
+
+        ~BasicLayer() {}
+
+        void addNode(std::unique_ptr<node_t> node_ptr) {
+            guard_.lock();
+            nodes.push_back(std::move(node_ptr));
+            guard_.unlock();
+        }
+
+        void deleteNode(std::unique_ptr<node_t> node) {}
+
     private:
+
+        std::mutex guard_;
+
+        std::vector<std::unique_ptr<node_t>> nodes;
 
     };
 }

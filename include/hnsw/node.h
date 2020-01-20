@@ -1,28 +1,39 @@
 #pragma once
 
+#include <mutex>
 
 namespace hnsw {
 
-    template<typename key_t,
+    template<typename id_type,
              typename data_t>
     class NodeInterface {
     public:
 
-        virtual void setData(key_t key, const void *in_data) = 0;
-    
-    protected:
-
-        key_t key;
-        data_t data;
-
+        virtual void setData(id_type key, data_t in_data) = 0;
+        
     };
 
-    template<typename key_t,
+    template<typename id_type,
              typename data_t>
-    class BasicNode : public NodeInterface<key_t,data_t> {
+    class BasicNode : public NodeInterface<id_type,data_t> {
     public:
 
+        BasicNode() {}
+
+        BasicNode(id_type id, data_t data) : id(id), data(data) {
+
+        }
+
+        ~BasicNode() {}
+
+        void setData(id_type key, data_t in_data) {}
+
     private:
+
+        std::mutex guard_;
+
+        id_type id;
+        data_t data;
 
     };
 

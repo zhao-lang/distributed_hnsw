@@ -5,13 +5,10 @@
 
 #include "hnsw/hnsw.h"
 #include "hnsw/node.h"
-#include "hnsw/layer.h"
 
 typedef float sim_t;
-typedef std::string id_type;
 typedef std::vector<float> data_t;
-typedef hnsw::BasicNode<id_type,data_t> node_t;
-typedef hnsw::BasicLayer<id_type,data_t,node_t> layer_t;
+typedef hnsw::BasicNode<data_t,sim_t> node_t;
 
 static float sim_func(data_t& a, data_t& b, size_t n) {
     float res = 0;
@@ -25,14 +22,15 @@ static float sim_func(data_t& a, data_t& b, size_t n) {
 int main() {
 
     hnsw::METRICFUNC<sim_t,data_t> mfunc = sim_func;
+    size_t data_dim = 5;
 
-    hnsw::Index<sim_t,id_type,data_t,layer_t,node_t> index (mfunc, 5, 10);
+    hnsw::Index<sim_t,data_t,node_t> index (mfunc, data_dim, 5, 10);
 
     std::cout << "Number of nodes: " << index.getNodeCount() << std::endl;
     std::cout << "Number of layers: " << index.getLayerCount() << std::endl;
 
-    data_t data (5);
-    id_type id ("test");
+    data_t data (data_dim, 1.0);
+    size_t id = 1;
 
     index.addNode(id, data);
 

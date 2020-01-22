@@ -70,6 +70,7 @@
         "*.tcc": "cpp",
         "memory_resource": "cpp",
         "cinttypes": "cpp",
-        "iostream": "cpp"
+        "iostream": "cpp",
+        "__functional_base_03": "cpp"
     }
 }

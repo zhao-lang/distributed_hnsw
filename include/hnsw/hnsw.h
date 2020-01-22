@@ -13,6 +13,15 @@
 
 namespace hnsw {
 
+    // Result type
+    template<typename data_t>
+    struct Result {
+        size_t id;
+        data_t& data;
+
+        Result(size_t id, data_t& data) : id(id), data(data) {}
+    };
+
     // metric function signature of (a, b, num_elements)
     template<typename sim_t,
              typename data_t>
@@ -41,6 +50,8 @@ namespace hnsw {
         
         using queue_desc_t = std::priority_queue<distpair_t, std::vector<distpair_t>, CompareByFirstLess>;
         using queue_asc_t = std::priority_queue<distpair_t, std::vector<distpair_t>, CompareByFirstGreater>;
+
+        using resultpair_t = std::pair<sim_t,Result<data_t>>;
         
 
     public:
@@ -62,31 +73,35 @@ namespace hnsw {
             level_mult_ = 1 / log(1.0 * M_);
 
             node_count_ = 0;
+            max_layer_ = 0;
 
             rng_.seed(seed);
-
-            data_t data0(data_dim);
-            size_t id = 0;
-            std::unique_ptr<node_t> node_ptr(new node_t(id, data0));
-
-            enterpoint = node_ptr.get();
-
-            nodes.push_back(std::move(node_ptr));
-            node_count_++;
         }
 
         ~Index() {}
 
-        void addNode(size_t& id, data_t& data) {
-            if (id == 0) {
-                throw std::runtime_error("ID 0 is reserved, use ID starting from 1 when building index");
+        void addNode(size_t id, data_t data) {
+            if (node_count_ == 0) {
+                std::unique_ptr<node_t> node_ptr(new node_t(id, data));
+
+                enterpoint = node_ptr.get();
+
+                node_count_guard_.lock();
+                node_count_++;
+                node_count_guard_.unlock();
+
+                nodes_guard_.lock();
+                nodes.push_back(std::move(node_ptr));
+                nodes_guard_.unlock();
+
+                return;
             }
 
             insert(id, data, M_, Mmax_, ef_construction_, level_mult_);
         }
 
-        queue_desc_t searchKnn(data_t, size_t k) {
-            
+        std::vector<resultpair_t> searchKnn(data_t& data, size_t K) {
+            return searchKnnInternal(data, K, ef_construction_);
         }
 
         size_t getNodeCount() {
@@ -96,7 +111,7 @@ namespace hnsw {
         size_t getLayerCount() {
             return max_layer_ + 1;
         }
-
+        
     private:
 
         METRICFUNC<sim_t,data_t> mfunc_;                // similarity metric function
@@ -147,7 +162,7 @@ namespace hnsw {
 
             lc = std::min(L, l);
             while (lc >= 0) {
-                W = search_level(data, ep, ef_construction_, lc);
+                W = search_level(data, ep, ef_construction, lc);
                 queue_desc_t neighbors = select_neighbors(node_ptr.get(), W, M, lc, true, true);
                 connect_neighbors(node_ptr.get(), queue_desc_t(neighbors), lc);
 
@@ -192,13 +207,13 @@ namespace hnsw {
                 enterpoint = node_ptr.get();
             }
 
-            nodes_guard_.lock();
-            nodes.push_back(std::move(node_ptr));
-            nodes_guard_.unlock();
-
             node_count_guard_.lock();
             node_count_++;
             node_count_guard_.unlock();
+
+            nodes_guard_.lock();
+            nodes.push_back(std::move(node_ptr));
+            nodes_guard_.unlock();
 
             // for (auto & n : nodes) {
             //     std::cout << n->neighbors.size() << ", " << n->neighbors[0].size() << std::endl;
@@ -335,6 +350,33 @@ namespace hnsw {
                 q->neighbors[level][npair.second->getID()] = npair;
                 npair.second->neighbors[level][q->getID()] = distpair_t(npair.first,q);
             }
+        }
+
+        std::vector<resultpair_t> searchKnnInternal(data_t& query, size_t K, size_t ef) {
+            queue_desc_t W;
+            node_t* ep = enterpoint;
+            size_t L = max_layer_;
+
+            size_t lc = L;
+            while (lc >= 1) {
+                W = search_level(query, ep, 1, lc);
+                ep = W.top().second;
+                lc--;
+            }
+
+            W = search_level(query, ep, ef, 0);
+
+            std::vector<resultpair_t> res;
+            while (res.size() < K && W.size() > 0) {
+                distpair_t c = W.top();
+                W.pop();
+
+                res.push_back(
+                    resultpair_t (c.first, Result(c.second->getID(), c.second->getData()))
+                );   
+            }
+
+            return res;
         }
 
         // #include <iostream>

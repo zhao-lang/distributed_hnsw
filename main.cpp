@@ -9,6 +9,7 @@
 typedef float sim_t;
 typedef std::vector<float> data_t;
 typedef hnsw::BasicNode<data_t,sim_t> node_t;
+typedef std::pair<sim_t,hnsw::Result<data_t>> resultpair_t;
 
 static float sim_func(data_t& a, data_t& b, size_t n) {
     float res = 0;
@@ -16,7 +17,7 @@ static float sim_func(data_t& a, data_t& b, size_t n) {
         float t = a[i] - b[i];
         res += t * t;
     }
-    return res;
+    return -res;
 }
 
 int main() {
@@ -29,12 +30,21 @@ int main() {
     std::cout << "Number of nodes: " << index.getNodeCount() << std::endl;
     std::cout << "Number of layers: " << index.getLayerCount() << std::endl;
 
-    data_t data (data_dim, 1.0);
-    size_t id = 1;
+    for (size_t i = 0; i < 20; i++) {
+        data_t data (data_dim, float(i));
+        size_t id = i;
 
-    index.addNode(id, data);
+        index.addNode(id, data);
+    }
 
     std::cout << "Number of nodes: " << index.getNodeCount() << std::endl;
+
+    data_t query (data_dim, 0.0);
+    std::vector<resultpair_t> res = index.searchKnn(query, 4);
+
+    for (auto & r : res) {
+        std::cout << "- similarity: " << r.first << ", ID: " << r.second.id << std::endl;
+    }
 
     return 0;
 }

@@ -4,7 +4,7 @@
 #include <vector>
 
 #include "hnsw/hnsw.h"
-#include "hnsw/node.h"
+
 
 typedef float sim_t;
 typedef std::vector<float> data_t;
@@ -30,7 +30,7 @@ int main() {
     std::cout << "Number of nodes: " << index.getNodeCount() << std::endl;
     std::cout << "Number of layers: " << index.getLayerCount() << std::endl;
 
-    for (size_t i = 0; i < 20; i++) {
+    for (size_t i = 0; i < 100; i++) {
         data_t data (data_dim, float(i));
         size_t id = i;
 
@@ -39,12 +39,14 @@ int main() {
 
     std::cout << "Number of nodes: " << index.getNodeCount() << std::endl;
 
-    data_t query (data_dim, 0.0);
-    std::vector<resultpair_t> res = index.searchKnn(query, 4);
+    data_t query (data_dim, 10.0);
+    std::vector<resultpair_t> res = index.searchKnn(query, 5);
 
     for (auto & r : res) {
         std::cout << "- similarity: " << r.first << ", ID: " << r.second.id << std::endl;
     }
+
+    std::cout << "Number of layers: " << index.getLayerCount() << std::endl;
 
     return 0;
 }

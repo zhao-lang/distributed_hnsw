@@ -84,7 +84,9 @@ namespace hnsw {
             if (node_count_ == 0) {
                 std::unique_ptr<node_t> node_ptr(new node_t(id, data));
 
+                enterpoint_guard_.lock();
                 enterpoint = node_ptr.get();
+                enterpoint_guard_.unlock();
 
                 node_count_guard_.lock();
                 node_count_++;
@@ -101,6 +103,10 @@ namespace hnsw {
         }
 
         std::vector<resultpair_t> searchKnn(data_t& data, size_t K) {
+            if (node_count_ == 0) {
+                return std::vector<resultpair_t> ();
+            }
+
             return searchKnnInternal(data, K, ef_construction_);
         }
 
@@ -133,6 +139,7 @@ namespace hnsw {
         std::mutex nodes_guard_;                        // mutex for nodes
         std::vector<std::unique_ptr<node_t>> nodes;     // vector of smart pointers to nodes
 
+        std::mutex enterpoint_guard_;
         node_t *enterpoint;
 
         std::default_random_engine rng_;
@@ -167,7 +174,6 @@ namespace hnsw {
                 connect_neighbors(node_ptr.get(), queue_desc_t(neighbors), lc);
 
                 // shrink connections as needed
-                // TODO keep sim_t in neighbors map so it doesn't have to get calced again
                 while (neighbors.size() > 0) {
                     distpair_t e = neighbors.top();
                     neighbors.pop();
@@ -181,12 +187,15 @@ namespace hnsw {
                     size_t _Mmax = (lc == 0) ? Mmax0_ : Mmax;
                     if (eConn.size() > _Mmax) {
                         queue_desc_t eNewConn = select_neighbors(e.second, eConn, _Mmax, lc, true, true);
+
+                        e.second->lock();
                         e.second->neighbors[lc].clear();
                         while (eNewConn.size() > 0) {
                             distpair_t newpair = eNewConn.top();
                             eNewConn.pop();
                             e.second->neighbors[lc][newpair.second->getID()] = newpair;
                         }
+                        e.second->unlock();
                     }
                 }
 
@@ -204,7 +213,9 @@ namespace hnsw {
                 max_layer_guard_.unlock();
 
                 // set enterpoint
+                enterpoint_guard_.lock();
                 enterpoint = node_ptr.get();
+                enterpoint_guard_.unlock();
             }
 
             node_count_guard_.lock();
@@ -249,9 +260,11 @@ namespace hnsw {
                 }
 
                 // update C and W
+                cpair.second->lock();
                 while (cpair.second->neighbors.size() < level+1) {
                     cpair.second->neighbors.push_back(std::unordered_map<size_t,distpair_t>());
                 }
+                cpair.second->unlock();
                 for (auto & emap : cpair.second->neighbors[level]) {
                     distpair_t e = emap.second;
                     size_t eid = e.second->getID();
@@ -335,6 +348,8 @@ namespace hnsw {
         }
 
         void connect_neighbors(node_t* q, queue_desc_t neighbors, size_t level) {
+            q->lock();
+
             while (q->neighbors.size() < level+1) {
                 q->neighbors.push_back(std::unordered_map<size_t,distpair_t>());
             }
@@ -343,13 +358,19 @@ namespace hnsw {
                 distpair_t npair = neighbors.top();
                 neighbors.pop();
 
+                npair.second->lock();
+
                 while (npair.second->neighbors.size() < level+1) {
                     npair.second->neighbors.push_back(std::unordered_map<size_t,distpair_t>());
                 }
 
                 q->neighbors[level][npair.second->getID()] = npair;
                 npair.second->neighbors[level][q->getID()] = distpair_t(npair.first,q);
+
+                npair.second->unlock();
             }
+
+            q->unlock();
         }
 
         std::vector<resultpair_t> searchKnnInternal(data_t& query, size_t K, size_t ef) {

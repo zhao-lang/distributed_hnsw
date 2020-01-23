@@ -71,6 +71,13 @@
         "memory_resource": "cpp",
         "cinttypes": "cpp",
         "iostream": "cpp",
-        "__functional_base_03": "cpp"
+        "__functional_base_03": "cpp",
+        "__tree": "cpp",
+        "future": "cpp",
+        "map": "cpp",
+        "regex": "cpp",
+        "set": "cpp",
+        "stack": "cpp",
+        "variant": "cpp"
     }
 }

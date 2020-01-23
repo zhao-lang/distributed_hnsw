@@ -36,6 +36,14 @@ namespace hnsw {
             return id;
         }
 
+        inline void lock() {
+            guard_.lock();
+        }
+
+        inline void unlock() {
+            guard_.unlock();
+        }
+
         using distpair_t = std::pair<sim_t,BasicNode<data_t,sim_t>*>;
         std::vector<std::unordered_map<size_t,distpair_t>> neighbors;
 

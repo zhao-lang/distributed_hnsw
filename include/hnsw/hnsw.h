@@ -420,7 +420,6 @@ namespace hnsw {
                     eConn.push(n.second);
                 }
 
-                // TODO refactor, duplicated code
                 size_t _Mmax = (lc == 0) ? Mmax0_ : Mmax;
                 queue_desc_t eNewConn = select_neighbors(e.second, eConn, _Mmax, lc, true, true, node);
                 update_node_connections(e.second, eNewConn, lc);

@@ -42,7 +42,7 @@ TEST_CASE("Index attributes should update correctly") {
             size_t id = i;
             hindex.addNode(id, data);
         }
-        REQUIRE(hindex.getNodeCount() == 100);
+        REQUIRE(hindex.getNodeCount() == n);
     }
 
     SECTION("Search should return correct results") {
@@ -60,6 +60,36 @@ TEST_CASE("Index attributes should update correctly") {
             }
             REQUIRE(found == true);
         }
+    }
+
+    SECTION("Deleting a node should succeed") {
+        hindex.deleteNode(10);
+        REQUIRE(hindex.getNodeCount() == 99);
+    }
+
+    SECTION("Search after delete should return correct results") {
+        data_t query (data_dim, 10.0);
+        std::vector<resultpair_t> res = hindex.searchKnn(query, 4);
+
+        std::vector<size_t> expected_ids = {8, 9, 11, 12};
+
+        for (auto & id : expected_ids) {
+            bool found = false;
+            for (auto & r : res) {
+                if (r.second.id == id) {
+                    found = true;
+                }
+            }
+            REQUIRE(found == true);
+        }
+
+        bool found = false;
+        for (auto & r : res) {
+            if (r.second.id == 10) {
+                found = true;
+            }
+        }
+        REQUIRE(found == false);
     }
 }
 

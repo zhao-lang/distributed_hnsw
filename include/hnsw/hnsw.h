@@ -52,6 +52,7 @@ namespace hnsw {
         using queue_asc_t = std::priority_queue<distpair_t, std::vector<distpair_t>, CompareByFirstGreater>;
 
         using resultpair_t = std::pair<sim_t,Result<data_t>>;
+        using nodesmap_t = std::unordered_map<size_t,std::unique_ptr<node_t>>;
         
 
     public:
@@ -82,32 +83,56 @@ namespace hnsw {
 
         void addNode(size_t id, data_t data) {
             if (node_count_ == 0) {
-                std::unique_ptr<node_t> node_ptr(new node_t(id, data));
-
-                enterpoint_guard_.lock();
-                enterpoint = node_ptr.get();
-                enterpoint_guard_.unlock();
+                nodes_guard_.lock();
+                nodes[id] = std::unique_ptr<node_t> (new node_t(id, data));
+                nodes_guard_.unlock();
 
                 node_count_guard_.lock();
                 node_count_++;
                 node_count_guard_.unlock();
 
-                nodes_guard_.lock();
-                nodes.push_back(std::move(node_ptr));
-                nodes_guard_.unlock();
+                enterpoint_guard_.lock();
+                enterpoint = nodes[id].get();
+                enterpoint_guard_.unlock();
 
+                return;
+            }
+
+            if (nodes.find(id) != nodes.end()) {
                 return;
             }
 
             insert(id, data, M_, Mmax_, ef_construction_, level_mult_);
         }
 
+        void deleteNode(size_t id) {
+            if (nodes.find(id) == nodes.end()) {
+                return;
+            } else {
+                for (size_t lc = 0; lc < std::min(max_layer_+1, nodes[id]->neighbors.size()); lc++) {
+                    deleteNodeNeighbors(nodes[id].get(), Mmax_, lc);
+                }
+
+                nodes_guard_.lock();
+                nodes.erase(id);
+                nodes_guard_.unlock();
+
+                node_count_guard_.lock();
+                node_count_--;
+                node_count_guard_.unlock();
+            }
+        }
+
         std::vector<resultpair_t> searchKnn(data_t& data, size_t K) {
-            if (node_count_ == 0) {
-                return std::vector<resultpair_t> ();
+            std::vector<resultpair_t> res;
+
+            if (node_count_ == 0 || !enterpoint) {
+                return res;
             }
 
-            return searchKnnInternal(data, K, ef_construction_);
+            res = searchKnnInternal(data, K, ef_construction_);
+
+            return res;
         }
 
         size_t getNodeCount() {
@@ -137,21 +162,27 @@ namespace hnsw {
         size_t max_layer_;                              // index of top layer
         
         std::mutex nodes_guard_;                        // mutex for nodes
-        std::vector<std::unique_ptr<node_t>> nodes;     // vector of smart pointers to nodes
+        nodesmap_t nodes;                              // vector of smart pointers to nodes
 
         std::mutex enterpoint_guard_;
         node_t *enterpoint;
 
         std::default_random_engine rng_;
 
-        void insert(size_t& id, data_t& data, size_t M, size_t Mmax, size_t ef_construction, double level_mult) {
+        void insert(size_t id, data_t& data, size_t M, size_t Mmax, size_t ef_construction, double level_mult) {
             
             queue_desc_t W;
             node_t *ep = enterpoint;
             size_t L = max_layer_;
             size_t l = genRandomLevel(level_mult);
 
-            std::unique_ptr<node_t> node_ptr(new node_t(id, data));
+            nodes_guard_.lock();
+            nodes[id] = std::unique_ptr<node_t> (new node_t(id, data));
+            nodes_guard_.unlock();
+
+            node_count_guard_.lock();
+            node_count_++;
+            node_count_guard_.unlock();
 
             size_t lc = L;
             while (lc >= l+1) {
@@ -170,8 +201,8 @@ namespace hnsw {
             lc = std::min(L, l);
             while (lc >= 0) {
                 W = search_level(data, ep, ef_construction, lc);
-                queue_desc_t neighbors = select_neighbors(node_ptr.get(), W, M, lc, true, true);
-                connect_neighbors(node_ptr.get(), queue_desc_t(neighbors), lc);
+                queue_desc_t neighbors = select_neighbors(nodes[id].get(), W, M, lc, true, true);
+                connect_neighbors(nodes[id].get(), queue_desc_t(neighbors), lc);
 
                 // shrink connections as needed
                 while (neighbors.size() > 0) {
@@ -214,22 +245,9 @@ namespace hnsw {
 
                 // set enterpoint
                 enterpoint_guard_.lock();
-                enterpoint = node_ptr.get();
+                enterpoint = nodes[id].get();
                 enterpoint_guard_.unlock();
             }
-
-            node_count_guard_.lock();
-            node_count_++;
-            node_count_guard_.unlock();
-
-            nodes_guard_.lock();
-            nodes.push_back(std::move(node_ptr));
-            nodes_guard_.unlock();
-
-            // for (auto & n : nodes) {
-            //     std::cout << n->neighbors.size() << ", " << n->neighbors[0].size() << std::endl;
-            //     print_map(n->neighbors[0]);
-            // }
         }
 
         size_t genRandomLevel(double level_mult) {
@@ -295,7 +313,7 @@ namespace hnsw {
             return res;
         }
 
-        queue_desc_t select_neighbors(node_t* query, queue_desc_t& C, size_t M, size_t lc, bool extendCandidates, bool keepPrunedConnections) {
+        queue_desc_t select_neighbors(node_t* query, queue_desc_t& C, size_t M, size_t lc, bool extendCandidates, bool keepPrunedConnections, node_t* ignoredNode = nullptr) {
             queue_desc_t R;
             queue_desc_t W(C);
             queue_desc_t Wd;
@@ -315,7 +333,15 @@ namespace hnsw {
                 while (Ccopy.size() > 0) {
                     distpair_t epair = Ccopy.top();
                     Ccopy.pop();
+
+                    if (epair.second == ignoredNode) {
+                        continue;
+                    }
+
                     for (auto & eadjmap : epair.second->neighbors[lc]) {
+                        if (eadjmap.second.second == ignoredNode || eadjmap.second.second == query) {
+                            continue;
+                        }
                         if (wmap.find(eadjmap.first) == wmap.end() || !wmap.find(eadjmap.first)->second) {
                             sim_t eadj_sim = mfunc_(query->getData(), eadjmap.second.second->getData(), data_dim_);
                             distpair_t eadjpair (eadj_sim, query);
@@ -329,6 +355,10 @@ namespace hnsw {
                 distpair_t epair = W.top();
                 W.pop();
 
+                if (epair.second == ignoredNode || epair.second == query) {
+                    continue;
+                }
+
                 if (R.size() == 0 || epair.first > R.top().first) {
                     R.push(epair);
                 } else {
@@ -340,6 +370,10 @@ namespace hnsw {
                 while (Wd.size() > 0 && R.size() < M) {
                     distpair_t ppair = Wd.top();
                     Wd.pop();
+
+                    if (ppair.second == ignoredNode || ppair.second == query) {
+                        continue;
+                    }
                     R.push(ppair);
                 }
             }
@@ -371,6 +405,34 @@ namespace hnsw {
             }
 
             q->unlock();
+        }
+
+        void deleteNodeNeighbors(node_t* node, size_t Mmax, size_t lc) {
+            auto & neighborhood = node->neighbors[lc];
+
+            for (auto & emap : neighborhood) {
+                // select new neighbors while excluding node
+                distpair_t e = emap.second;
+                
+                std::unordered_map<size_t,distpair_t> eConnMap = e.second->neighbors[lc];
+                queue_desc_t eConn;
+                for (auto & n : eConnMap) {
+                    eConn.push(n.second);
+                }
+
+                // TODO this is not reconstructing the new connections correctly
+                size_t _Mmax = (lc == 0) ? Mmax0_ : Mmax;
+                queue_desc_t eNewConn = select_neighbors(e.second, eConn, _Mmax, lc, true, true, node);
+
+                e.second->lock();
+                e.second->neighbors[lc].clear();
+                while (eNewConn.size() > 0) {
+                    distpair_t newpair = eNewConn.top();
+                    eNewConn.pop();
+                    e.second->neighbors[lc][newpair.second->getID()] = newpair;
+                }
+                e.second->unlock();
+            }
         }
 
         std::vector<resultpair_t> searchKnnInternal(data_t& query, size_t K, size_t ef) {

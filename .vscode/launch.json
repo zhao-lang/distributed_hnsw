@@ -35,7 +35,7 @@
           "traceResponse": true,
           "engineLogging": true
         },
-        "preLaunchTask": "${defaultBuildTask}"
+        "preLaunchTask": "Build tests"
       }
     ]
   }

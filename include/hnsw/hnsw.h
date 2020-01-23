@@ -334,18 +334,15 @@ namespace hnsw {
                     distpair_t epair = Ccopy.top();
                     Ccopy.pop();
 
-                    if (epair.second == ignoredNode) {
-                        continue;
-                    }
-
                     for (auto & eadjmap : epair.second->neighbors[lc]) {
                         if (eadjmap.second.second == ignoredNode || eadjmap.second.second == query) {
                             continue;
                         }
                         if (wmap.find(eadjmap.first) == wmap.end() || !wmap.find(eadjmap.first)->second) {
                             sim_t eadj_sim = mfunc_(query->getData(), eadjmap.second.second->getData(), data_dim_);
-                            distpair_t eadjpair (eadj_sim, query);
+                            distpair_t eadjpair (eadj_sim, eadjmap.second.second);
                             W.push(eadjpair);
+                            wmap[eadjpair.second->getID()] = true;
                         }
                     }
                 }

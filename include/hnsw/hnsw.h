@@ -218,15 +218,7 @@ namespace hnsw {
                     size_t _Mmax = (lc == 0) ? Mmax0_ : Mmax;
                     if (eConn.size() > _Mmax) {
                         queue_desc_t eNewConn = select_neighbors(e.second, eConn, _Mmax, lc, true, true);
-
-                        e.second->lock();
-                        e.second->neighbors[lc].clear();
-                        while (eNewConn.size() > 0) {
-                            distpair_t newpair = eNewConn.top();
-                            eNewConn.pop();
-                            e.second->neighbors[lc][newpair.second->getID()] = newpair;
-                        }
-                        e.second->unlock();
+                        update_node_connections(e.second, eNewConn, lc);
                     }
                 }
 
@@ -404,6 +396,17 @@ namespace hnsw {
             q->unlock();
         }
 
+        void update_node_connections(node_t* node, queue_desc_t& nodeConn, size_t lc) {
+            node->lock();
+            node->neighbors[lc].clear();
+            while (nodeConn.size() > 0) {
+                distpair_t newpair = nodeConn.top();
+                nodeConn.pop();
+                node->neighbors[lc][newpair.second->getID()] = newpair;
+            }
+            node->unlock();
+        }
+
         void deleteNodeNeighbors(node_t* node, size_t Mmax, size_t lc) {
             auto & neighborhood = node->neighbors[lc];
 
@@ -417,18 +420,10 @@ namespace hnsw {
                     eConn.push(n.second);
                 }
 
-                // TODO this is not reconstructing the new connections correctly
+                // TODO refactor, duplicated code
                 size_t _Mmax = (lc == 0) ? Mmax0_ : Mmax;
                 queue_desc_t eNewConn = select_neighbors(e.second, eConn, _Mmax, lc, true, true, node);
-
-                e.second->lock();
-                e.second->neighbors[lc].clear();
-                while (eNewConn.size() > 0) {
-                    distpair_t newpair = eNewConn.top();
-                    eNewConn.pop();
-                    e.second->neighbors[lc][newpair.second->getID()] = newpair;
-                }
-                e.second->unlock();
+                update_node_connections(e.second, eNewConn, lc);
             }
         }
 

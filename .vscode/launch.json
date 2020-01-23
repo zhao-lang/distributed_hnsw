@@ -2,10 +2,10 @@
     "version": "0.2.0",
     "configurations": [
       {
-        "name": "(lldb) Launch",
+        "name": "(lldb) Debug",
         "type": "lldb",
         "request": "launch",
-        "program": "${workspaceFolder}/build/dhnsw.out",
+        "program": "${workspaceFolder}/build/example.out",
         "args": [],
         "stopAtEntry": true,
         "cwd": "${workspaceFolder}",

@@ -2,16 +2,16 @@
     "version": "2.0.0",
     "tasks": [
       {
-        "label": "Build",
+        "label": "Build Example",
         "type": "shell",
         "command": "clang++",
         "args": [
           "-std=c++17",
           "-stdlib=libc++",
           "-I./include",
-          "main.cpp",
+          "examples/main.cpp",
           "-o",
-          "build/dhnsw.out",
+          "build/example.out",
           "--debug"
         ],
         "group": {

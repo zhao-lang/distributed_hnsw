@@ -4,15 +4,17 @@
       {
         "label": "Build Example",
         "type": "shell",
-        "command": "clang++",
+        "command": "cmake",
         "args": [
-          "-std=c++17",
-          "-stdlib=libc++",
-          "-I./include",
-          "examples/main.cpp",
-          "-o",
-          "build/example.out",
-          "--debug"
+          "--build",
+          "./build",
+          "--config",
+          "debug",
+          "--target",
+          "example",
+          "--",
+          "-j",
+          "10"
         ],
         "group": {
           "kind": "build",
@@ -22,17 +24,17 @@
       {
         "label": "Build tests",
         "type": "shell",
-        "command": "clang++",
+        "command": "cmake",
         "args": [
-          "-std=c++17",
-          "-stdlib=libc++",
-          "-I./include",
-          "-I./tests",
-          "tests/main.cpp",
-          "tests/hnsw_tests.cpp",
-          "-o",
-          "build/tests.out",
-          "--debug"
+          "--build",
+          "./build",
+          "--config",
+          "debug",
+          "--target",
+          "tests",
+          "--",
+          "-j",
+          "10"
         ],
         "group": "test"
       },

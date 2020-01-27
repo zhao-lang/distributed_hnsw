@@ -1,5 +1,6 @@
 include/hnswlib/
 
 build/
+Testing/
 *.out
 *.dSYM

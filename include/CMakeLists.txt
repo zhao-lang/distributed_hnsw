@@ -1,1 +1,1 @@
-add_library(hnsw hnsw/main.cpp)
+add_library(hnsw INTERFACE)

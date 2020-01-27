@@ -8,24 +8,33 @@ set(CMAKE_CXX_STANDARD 17)
 set(CMAKE_CXX_STANDARD_REQUIRED True)
 set(CMAKE_MODULE_PATH ${CMAKE_MODULE_PATH} "${CMAKE_SOURCE_DIR}/cmake/Modules/")
 
+add_subdirectory(include)
+
 include(FetchContent)
 
 # grpc++
 FetchContent_Declare(
   gRPC
-  GIT_REPOSITORY https://github.com/grpc/grpc
-  GIT_TAG        v1.26.0
-)
+  GIT_REPOSITORY https://github.com/grpc/grpc.git
+  GIT_TAG        v1.26.0)
 FetchContent_MakeAvailable(gRPC)
-
-add_subdirectory(include)
 
 # example executable
 add_executable(dhnsw_examples examples/main.cpp)
 
-target_link_libraries(dhnsw_examples PUBLIC hnsw pb grpc++)
+target_link_libraries(dhnsw_examples PUBLIC hnsw)
 
 target_include_directories(dhnsw_examples PUBLIC
+                          "${PROJECT_BINARY_DIR}"
+                          "${PROJECT_SOURCE_DIR}/include"
+                          )
+
+# server executable
+add_executable(server src/server/main.cpp)
+
+target_link_libraries(server PUBLIC hnsw pb grpc++)
+
+target_include_directories(server PUBLIC
                           "${PROJECT_BINARY_DIR}"
                           "${PROJECT_SOURCE_DIR}/include"
                           )

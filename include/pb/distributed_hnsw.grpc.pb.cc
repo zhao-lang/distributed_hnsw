@@ -5,14 +5,20 @@
 #include "distributed_hnsw.pb.h"
 #include "distributed_hnsw.grpc.pb.h"
 
-#include <grpc++/impl/codegen/async_stream.h>
-#include <grpc++/impl/codegen/async_unary_call.h>
-#include <grpc++/impl/codegen/channel_interface.h>
-#include <grpc++/impl/codegen/client_unary_call.h>
-#include <grpc++/impl/codegen/method_handler_impl.h>
-#include <grpc++/impl/codegen/rpc_service_method.h>
-#include <grpc++/impl/codegen/service_type.h>
-#include <grpc++/impl/codegen/sync_stream.h>
+#include <functional>
+#include <grpcpp/impl/codegen/async_stream.h>
+#include <grpcpp/impl/codegen/async_unary_call.h>
+#include <grpcpp/impl/codegen/channel_interface.h>
+#include <grpcpp/impl/codegen/client_unary_call.h>
+#include <grpcpp/impl/codegen/client_callback.h>
+#include <grpcpp/impl/codegen/message_allocator.h>
+#include <grpcpp/impl/codegen/method_handler.h>
+#include <grpcpp/impl/codegen/rpc_service_method.h>
+#include <grpcpp/impl/codegen/server_callback.h>
+#include <grpcpp/impl/codegen/server_callback_handlers.h>
+#include <grpcpp/impl/codegen/server_context.h>
+#include <grpcpp/impl/codegen/service_type.h>
+#include <grpcpp/impl/codegen/sync_stream.h>
 
 static const char* DistributedHNSW_method_names[] = {
   "/DistributedHNSW/Join",
@@ -22,6 +28,7 @@ static const char* DistributedHNSW_method_names[] = {
 };
 
 std::unique_ptr< DistributedHNSW::Stub> DistributedHNSW::NewStub(const std::shared_ptr< ::grpc::ChannelInterface>& channel, const ::grpc::StubOptions& options) {
+  (void)options;
   std::unique_ptr< DistributedHNSW::Stub> stub(new DistributedHNSW::Stub(channel));
   return stub;
 }
@@ -37,48 +44,112 @@ DistributedHNSW::Stub::Stub(const std::shared_ptr< ::grpc::ChannelInterface>& ch
   return ::grpc::internal::BlockingUnaryCall(channel_.get(), rpcmethod_Join_, context, request, response);
 }
 
+void DistributedHNSW::Stub::experimental_async::Join(::grpc::ClientContext* context, const ::JoinRequest* request, ::JoinResponse* response, std::function<void(::grpc::Status)> f) {
+  ::grpc_impl::internal::CallbackUnaryCall(stub_->channel_.get(), stub_->rpcmethod_Join_, context, request, response, std::move(f));
+}
+
+void DistributedHNSW::Stub::experimental_async::Join(::grpc::ClientContext* context, const ::grpc::ByteBuffer* request, ::JoinResponse* response, std::function<void(::grpc::Status)> f) {
+  ::grpc_impl::internal::CallbackUnaryCall(stub_->channel_.get(), stub_->rpcmethod_Join_, context, request, response, std::move(f));
+}
+
+void DistributedHNSW::Stub::experimental_async::Join(::grpc::ClientContext* context, const ::JoinRequest* request, ::JoinResponse* response, ::grpc::experimental::ClientUnaryReactor* reactor) {
+  ::grpc_impl::internal::ClientCallbackUnaryFactory::Create(stub_->channel_.get(), stub_->rpcmethod_Join_, context, request, response, reactor);
+}
+
+void DistributedHNSW::Stub::experimental_async::Join(::grpc::ClientContext* context, const ::grpc::ByteBuffer* request, ::JoinResponse* response, ::grpc::experimental::ClientUnaryReactor* reactor) {
+  ::grpc_impl::internal::ClientCallbackUnaryFactory::Create(stub_->channel_.get(), stub_->rpcmethod_Join_, context, request, response, reactor);
+}
+
 ::grpc::ClientAsyncResponseReader< ::JoinResponse>* DistributedHNSW::Stub::AsyncJoinRaw(::grpc::ClientContext* context, const ::JoinRequest& request, ::grpc::CompletionQueue* cq) {
-  return ::grpc::internal::ClientAsyncResponseReaderFactory< ::JoinResponse>::Create(channel_.get(), cq, rpcmethod_Join_, context, request, true);
+  return ::grpc_impl::internal::ClientAsyncResponseReaderFactory< ::JoinResponse>::Create(channel_.get(), cq, rpcmethod_Join_, context, request, true);
 }
 
 ::grpc::ClientAsyncResponseReader< ::JoinResponse>* DistributedHNSW::Stub::PrepareAsyncJoinRaw(::grpc::ClientContext* context, const ::JoinRequest& request, ::grpc::CompletionQueue* cq) {
-  return ::grpc::internal::ClientAsyncResponseReaderFactory< ::JoinResponse>::Create(channel_.get(), cq, rpcmethod_Join_, context, request, false);
+  return ::grpc_impl::internal::ClientAsyncResponseReaderFactory< ::JoinResponse>::Create(channel_.get(), cq, rpcmethod_Join_, context, request, false);
 }
 
 ::grpc::Status DistributedHNSW::Stub::AddNode(::grpc::ClientContext* context, const ::Node& request, ::Empty* response) {
   return ::grpc::internal::BlockingUnaryCall(channel_.get(), rpcmethod_AddNode_, context, request, response);
 }
 
+void DistributedHNSW::Stub::experimental_async::AddNode(::grpc::ClientContext* context, const ::Node* request, ::Empty* response, std::function<void(::grpc::Status)> f) {
+  ::grpc_impl::internal::CallbackUnaryCall(stub_->channel_.get(), stub_->rpcmethod_AddNode_, context, request, response, std::move(f));
+}
+
+void DistributedHNSW::Stub::experimental_async::AddNode(::grpc::ClientContext* context, const ::grpc::ByteBuffer* request, ::Empty* response, std::function<void(::grpc::Status)> f) {
+  ::grpc_impl::internal::CallbackUnaryCall(stub_->channel_.get(), stub_->rpcmethod_AddNode_, context, request, response, std::move(f));
+}
+
+void DistributedHNSW::Stub::experimental_async::AddNode(::grpc::ClientContext* context, const ::Node* request, ::Empty* response, ::grpc::experimental::ClientUnaryReactor* reactor) {
+  ::grpc_impl::internal::ClientCallbackUnaryFactory::Create(stub_->channel_.get(), stub_->rpcmethod_AddNode_, context, request, response, reactor);
+}
+
+void DistributedHNSW::Stub::experimental_async::AddNode(::grpc::ClientContext* context, const ::grpc::ByteBuffer* request, ::Empty* response, ::grpc::experimental::ClientUnaryReactor* reactor) {
+  ::grpc_impl::internal::ClientCallbackUnaryFactory::Create(stub_->channel_.get(), stub_->rpcmethod_AddNode_, context, request, response, reactor);
+}
+
 ::grpc::ClientAsyncResponseReader< ::Empty>* DistributedHNSW::Stub::AsyncAddNodeRaw(::grpc::ClientContext* context, const ::Node& request, ::grpc::CompletionQueue* cq) {
-  return ::grpc::internal::ClientAsyncResponseReaderFactory< ::Empty>::Create(channel_.get(), cq, rpcmethod_AddNode_, context, request, true);
+  return ::grpc_impl::internal::ClientAsyncResponseReaderFactory< ::Empty>::Create(channel_.get(), cq, rpcmethod_AddNode_, context, request, true);
 }
 
 ::grpc::ClientAsyncResponseReader< ::Empty>* DistributedHNSW::Stub::PrepareAsyncAddNodeRaw(::grpc::ClientContext* context, const ::Node& request, ::grpc::CompletionQueue* cq) {
-  return ::grpc::internal::ClientAsyncResponseReaderFactory< ::Empty>::Create(channel_.get(), cq, rpcmethod_AddNode_, context, request, false);
+  return ::grpc_impl::internal::ClientAsyncResponseReaderFactory< ::Empty>::Create(channel_.get(), cq, rpcmethod_AddNode_, context, request, false);
 }
 
 ::grpc::Status DistributedHNSW::Stub::DeleteNode(::grpc::ClientContext* context, const ::Node& request, ::Empty* response) {
   return ::grpc::internal::BlockingUnaryCall(channel_.get(), rpcmethod_DeleteNode_, context, request, response);
 }
 
+void DistributedHNSW::Stub::experimental_async::DeleteNode(::grpc::ClientContext* context, const ::Node* request, ::Empty* response, std::function<void(::grpc::Status)> f) {
+  ::grpc_impl::internal::CallbackUnaryCall(stub_->channel_.get(), stub_->rpcmethod_DeleteNode_, context, request, response, std::move(f));
+}
+
+void DistributedHNSW::Stub::experimental_async::DeleteNode(::grpc::ClientContext* context, const ::grpc::ByteBuffer* request, ::Empty* response, std::function<void(::grpc::Status)> f) {
+  ::grpc_impl::internal::CallbackUnaryCall(stub_->channel_.get(), stub_->rpcmethod_DeleteNode_, context, request, response, std::move(f));
+}
+
+void DistributedHNSW::Stub::experimental_async::DeleteNode(::grpc::ClientContext* context, const ::Node* request, ::Empty* response, ::grpc::experimental::ClientUnaryReactor* reactor) {
+  ::grpc_impl::internal::ClientCallbackUnaryFactory::Create(stub_->channel_.get(), stub_->rpcmethod_DeleteNode_, context, request, response, reactor);
+}
+
+void DistributedHNSW::Stub::experimental_async::DeleteNode(::grpc::ClientContext* context, const ::grpc::ByteBuffer* request, ::Empty* response, ::grpc::experimental::ClientUnaryReactor* reactor) {
+  ::grpc_impl::internal::ClientCallbackUnaryFactory::Create(stub_->channel_.get(), stub_->rpcmethod_DeleteNode_, context, request, response, reactor);
+}
+
 ::grpc::ClientAsyncResponseReader< ::Empty>* DistributedHNSW::Stub::AsyncDeleteNodeRaw(::grpc::ClientContext* context, const ::Node& request, ::grpc::CompletionQueue* cq) {
-  return ::grpc::internal::ClientAsyncResponseReaderFactory< ::Empty>::Create(channel_.get(), cq, rpcmethod_DeleteNode_, context, request, true);
+  return ::grpc_impl::internal::ClientAsyncResponseReaderFactory< ::Empty>::Create(channel_.get(), cq, rpcmethod_DeleteNode_, context, request, true);
 }
 
 ::grpc::ClientAsyncResponseReader< ::Empty>* DistributedHNSW::Stub::PrepareAsyncDeleteNodeRaw(::grpc::ClientContext* context, const ::Node& request, ::grpc::CompletionQueue* cq) {
-  return ::grpc::internal::ClientAsyncResponseReaderFactory< ::Empty>::Create(channel_.get(), cq, rpcmethod_DeleteNode_, context, request, false);
+  return ::grpc_impl::internal::ClientAsyncResponseReaderFactory< ::Empty>::Create(channel_.get(), cq, rpcmethod_DeleteNode_, context, request, false);
 }
 
 ::grpc::Status DistributedHNSW::Stub::SearchKNN(::grpc::ClientContext* context, const ::Node& request, ::SearchResult* response) {
   return ::grpc::internal::BlockingUnaryCall(channel_.get(), rpcmethod_SearchKNN_, context, request, response);
 }
 
+void DistributedHNSW::Stub::experimental_async::SearchKNN(::grpc::ClientContext* context, const ::Node* request, ::SearchResult* response, std::function<void(::grpc::Status)> f) {
+  ::grpc_impl::internal::CallbackUnaryCall(stub_->channel_.get(), stub_->rpcmethod_SearchKNN_, context, request, response, std::move(f));
+}
+
+void DistributedHNSW::Stub::experimental_async::SearchKNN(::grpc::ClientContext* context, const ::grpc::ByteBuffer* request, ::SearchResult* response, std::function<void(::grpc::Status)> f) {
+  ::grpc_impl::internal::CallbackUnaryCall(stub_->channel_.get(), stub_->rpcmethod_SearchKNN_, context, request, response, std::move(f));
+}
+
+void DistributedHNSW::Stub::experimental_async::SearchKNN(::grpc::ClientContext* context, const ::Node* request, ::SearchResult* response, ::grpc::experimental::ClientUnaryReactor* reactor) {
+  ::grpc_impl::internal::ClientCallbackUnaryFactory::Create(stub_->channel_.get(), stub_->rpcmethod_SearchKNN_, context, request, response, reactor);
+}
+
+void DistributedHNSW::Stub::experimental_async::SearchKNN(::grpc::ClientContext* context, const ::grpc::ByteBuffer* request, ::SearchResult* response, ::grpc::experimental::ClientUnaryReactor* reactor) {
+  ::grpc_impl::internal::ClientCallbackUnaryFactory::Create(stub_->channel_.get(), stub_->rpcmethod_SearchKNN_, context, request, response, reactor);
+}
+
 ::grpc::ClientAsyncResponseReader< ::SearchResult>* DistributedHNSW::Stub::AsyncSearchKNNRaw(::grpc::ClientContext* context, const ::Node& request, ::grpc::CompletionQueue* cq) {
-  return ::grpc::internal::ClientAsyncResponseReaderFactory< ::SearchResult>::Create(channel_.get(), cq, rpcmethod_SearchKNN_, context, request, true);
+  return ::grpc_impl::internal::ClientAsyncResponseReaderFactory< ::SearchResult>::Create(channel_.get(), cq, rpcmethod_SearchKNN_, context, request, true);
 }
 
 ::grpc::ClientAsyncResponseReader< ::SearchResult>* DistributedHNSW::Stub::PrepareAsyncSearchKNNRaw(::grpc::ClientContext* context, const ::Node& request, ::grpc::CompletionQueue* cq) {
-  return ::grpc::internal::ClientAsyncResponseReaderFactory< ::SearchResult>::Create(channel_.get(), cq, rpcmethod_SearchKNN_, context, request, false);
+  return ::grpc_impl::internal::ClientAsyncResponseReaderFactory< ::SearchResult>::Create(channel_.get(), cq, rpcmethod_SearchKNN_, context, request, false);
 }
 
 DistributedHNSW::Service::Service() {

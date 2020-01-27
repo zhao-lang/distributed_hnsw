@@ -1,0 +1,28 @@
+syntax = "proto3";
+
+
+service DistributedHNSW {
+    rpc Join (JoinRequest) returns (JoinResponse) {}
+    rpc AddNode (Node) returns (Empty) {}
+    rpc DeleteNode (Node) returns (Empty) {}
+    rpc SearchKNN (Node) returns (SearchResult) {}
+}
+
+message JoinRequest {
+    string worker_id = 1;
+}
+
+message JoinResponse {
+    string worker_id = 1;
+}
+
+message Node {
+    int64 id = 1;
+    repeated float value = 2;
+}
+
+message SearchResult {
+    repeated Node nodes = 1;
+}
+
+message Empty {}

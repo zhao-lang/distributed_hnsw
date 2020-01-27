@@ -23,7 +23,7 @@ add_subdirectory(include)
 # example executable
 add_executable(dhnsw_examples examples/main.cpp)
 
-target_link_libraries(dhnsw_examples PUBLIC hnsw grpc++)
+target_link_libraries(dhnsw_examples PUBLIC hnsw pb grpc++)
 
 target_include_directories(dhnsw_examples PUBLIC
                           "${PROJECT_BINARY_DIR}"
@@ -41,9 +41,9 @@ if(CMAKE_PROJECT_NAME STREQUAL PROJECT_NAME AND BUILD_TESTING)
     target_link_libraries(tests PUBLIC hnsw)
 
     target_include_directories(tests PUBLIC
-                            "${PROJECT_BINARY_DIR}"
-                            "${PROJECT_SOURCE_DIR}/include"
-                            )
+                              "${PROJECT_BINARY_DIR}"
+                              "${PROJECT_SOURCE_DIR}/include"
+                              )
 
     # test discovery
     catch_discover_tests(tests)

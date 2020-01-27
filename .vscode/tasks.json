@@ -11,7 +11,7 @@
           "--config",
           "debug",
           "--target",
-          "example",
+          "dhnsw_examples",
           "--",
           "-j",
           "10"

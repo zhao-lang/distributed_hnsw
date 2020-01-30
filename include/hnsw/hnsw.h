@@ -446,7 +446,7 @@ namespace hnsw {
                 W.pop();
 
                 res.push_back(
-                    resultpair_t (c.first, Result(c.second->getID(), c.second->getData()))
+                    resultpair_t(c.first, Result<data_t>(c.second->getID(), c.second->getData()))
                 );   
             }
 

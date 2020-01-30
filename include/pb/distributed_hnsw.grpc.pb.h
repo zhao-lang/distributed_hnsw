@@ -7,14 +7,12 @@
 #include "distributed_hnsw.pb.h"
 
 #include <functional>
-#include <grpc/impl/codegen/port_platform.h>
 #include <grpcpp/impl/codegen/async_generic_service.h>
 #include <grpcpp/impl/codegen/async_stream.h>
 #include <grpcpp/impl/codegen/async_unary_call.h>
 #include <grpcpp/impl/codegen/client_callback.h>
 #include <grpcpp/impl/codegen/client_context.h>
 #include <grpcpp/impl/codegen/completion_queue.h>
-#include <grpcpp/impl/codegen/message_allocator.h>
 #include <grpcpp/impl/codegen/method_handler.h>
 #include <grpcpp/impl/codegen/proto_utils.h>
 #include <grpcpp/impl/codegen/rpc_method.h>
@@ -25,6 +23,19 @@
 #include <grpcpp/impl/codegen/status.h>
 #include <grpcpp/impl/codegen/stub_options.h>
 #include <grpcpp/impl/codegen/sync_stream.h>
+
+namespace grpc_impl {
+class CompletionQueue;
+class ServerCompletionQueue;
+class ServerContext;
+}  // namespace grpc_impl
+
+namespace grpc {
+namespace experimental {
+template <typename RequestT, typename ResponseT>
+class MessageAllocator;
+}  // namespace experimental
+}  // namespace grpc
 
 class DistributedHNSW final {
  public:
@@ -67,59 +78,21 @@ class DistributedHNSW final {
       virtual ~experimental_async_interface() {}
       virtual void Join(::grpc::ClientContext* context, const ::JoinRequest* request, ::JoinResponse* response, std::function<void(::grpc::Status)>) = 0;
       virtual void Join(::grpc::ClientContext* context, const ::grpc::ByteBuffer* request, ::JoinResponse* response, std::function<void(::grpc::Status)>) = 0;
-      #ifdef GRPC_CALLBACK_API_NONEXPERIMENTAL
-      virtual void Join(::grpc::ClientContext* context, const ::JoinRequest* request, ::JoinResponse* response, ::grpc::ClientUnaryReactor* reactor) = 0;
-      #else
       virtual void Join(::grpc::ClientContext* context, const ::JoinRequest* request, ::JoinResponse* response, ::grpc::experimental::ClientUnaryReactor* reactor) = 0;
-      #endif
-      #ifdef GRPC_CALLBACK_API_NONEXPERIMENTAL
-      virtual void Join(::grpc::ClientContext* context, const ::grpc::ByteBuffer* request, ::JoinResponse* response, ::grpc::ClientUnaryReactor* reactor) = 0;
-      #else
       virtual void Join(::grpc::ClientContext* context, const ::grpc::ByteBuffer* request, ::JoinResponse* response, ::grpc::experimental::ClientUnaryReactor* reactor) = 0;
-      #endif
       virtual void AddNode(::grpc::ClientContext* context, const ::Node* request, ::Empty* response, std::function<void(::grpc::Status)>) = 0;
       virtual void AddNode(::grpc::ClientContext* context, const ::grpc::ByteBuffer* request, ::Empty* response, std::function<void(::grpc::Status)>) = 0;
-      #ifdef GRPC_CALLBACK_API_NONEXPERIMENTAL
-      virtual void AddNode(::grpc::ClientContext* context, const ::Node* request, ::Empty* response, ::grpc::ClientUnaryReactor* reactor) = 0;
-      #else
       virtual void AddNode(::grpc::ClientContext* context, const ::Node* request, ::Empty* response, ::grpc::experimental::ClientUnaryReactor* reactor) = 0;
-      #endif
-      #ifdef GRPC_CALLBACK_API_NONEXPERIMENTAL
-      virtual void AddNode(::grpc::ClientContext* context, const ::grpc::ByteBuffer* request, ::Empty* response, ::grpc::ClientUnaryReactor* reactor) = 0;
-      #else
       virtual void AddNode(::grpc::ClientContext* context, const ::grpc::ByteBuffer* request, ::Empty* response, ::grpc::experimental::ClientUnaryReactor* reactor) = 0;
-      #endif
       virtual void DeleteNode(::grpc::ClientContext* context, const ::Node* request, ::Empty* response, std::function<void(::grpc::Status)>) = 0;
       virtual void DeleteNode(::grpc::ClientContext* context, const ::grpc::ByteBuffer* request, ::Empty* response, std::function<void(::grpc::Status)>) = 0;
-      #ifdef GRPC_CALLBACK_API_NONEXPERIMENTAL
-      virtual void DeleteNode(::grpc::ClientContext* context, const ::Node* request, ::Empty* response, ::grpc::ClientUnaryReactor* reactor) = 0;
-      #else
       virtual void DeleteNode(::grpc::ClientContext* context, const ::Node* request, ::Empty* response, ::grpc::experimental::ClientUnaryReactor* reactor) = 0;
-      #endif
-      #ifdef GRPC_CALLBACK_API_NONEXPERIMENTAL
-      virtual void DeleteNode(::grpc::ClientContext* context, const ::grpc::ByteBuffer* request, ::Empty* response, ::grpc::ClientUnaryReactor* reactor) = 0;
-      #else
       virtual void DeleteNode(::grpc::ClientContext* context, const ::grpc::ByteBuffer* request, ::Empty* response, ::grpc::experimental::ClientUnaryReactor* reactor) = 0;
-      #endif
       virtual void SearchKNN(::grpc::ClientContext* context, const ::Node* request, ::SearchResult* response, std::function<void(::grpc::Status)>) = 0;
       virtual void SearchKNN(::grpc::ClientContext* context, const ::grpc::ByteBuffer* request, ::SearchResult* response, std::function<void(::grpc::Status)>) = 0;
-      #ifdef GRPC_CALLBACK_API_NONEXPERIMENTAL
-      virtual void SearchKNN(::grpc::ClientContext* context, const ::Node* request, ::SearchResult* response, ::grpc::ClientUnaryReactor* reactor) = 0;
-      #else
       virtual void SearchKNN(::grpc::ClientContext* context, const ::Node* request, ::SearchResult* response, ::grpc::experimental::ClientUnaryReactor* reactor) = 0;
-      #endif
-      #ifdef GRPC_CALLBACK_API_NONEXPERIMENTAL
-      virtual void SearchKNN(::grpc::ClientContext* context, const ::grpc::ByteBuffer* request, ::SearchResult* response, ::grpc::ClientUnaryReactor* reactor) = 0;
-      #else
       virtual void SearchKNN(::grpc::ClientContext* context, const ::grpc::ByteBuffer* request, ::SearchResult* response, ::grpc::experimental::ClientUnaryReactor* reactor) = 0;
-      #endif
     };
-    #ifdef GRPC_CALLBACK_API_NONEXPERIMENTAL
-    typedef class experimental_async_interface async_interface;
-    #endif
-    #ifdef GRPC_CALLBACK_API_NONEXPERIMENTAL
-    async_interface* async() { return experimental_async(); }
-    #endif
     virtual class experimental_async_interface* experimental_async() { return nullptr; }
   private:
     virtual ::grpc::ClientAsyncResponseReaderInterface< ::JoinResponse>* AsyncJoinRaw(::grpc::ClientContext* context, const ::JoinRequest& request, ::grpc::CompletionQueue* cq) = 0;
@@ -167,52 +140,20 @@ class DistributedHNSW final {
      public:
       void Join(::grpc::ClientContext* context, const ::JoinRequest* request, ::JoinResponse* response, std::function<void(::grpc::Status)>) override;
       void Join(::grpc::ClientContext* context, const ::grpc::ByteBuffer* request, ::JoinResponse* response, std::function<void(::grpc::Status)>) override;
-      #ifdef GRPC_CALLBACK_API_NONEXPERIMENTAL
-      void Join(::grpc::ClientContext* context, const ::JoinRequest* request, ::JoinResponse* response, ::grpc::ClientUnaryReactor* reactor) override;
-      #else
       void Join(::grpc::ClientContext* context, const ::JoinRequest* request, ::JoinResponse* response, ::grpc::experimental::ClientUnaryReactor* reactor) override;
-      #endif
-      #ifdef GRPC_CALLBACK_API_NONEXPERIMENTAL
-      void Join(::grpc::ClientContext* context, const ::grpc::ByteBuffer* request, ::JoinResponse* response, ::grpc::ClientUnaryReactor* reactor) override;
-      #else
       void Join(::grpc::ClientContext* context, const ::grpc::ByteBuffer* request, ::JoinResponse* response, ::grpc::experimental::ClientUnaryReactor* reactor) override;
-      #endif
       void AddNode(::grpc::ClientContext* context, const ::Node* request, ::Empty* response, std::function<void(::grpc::Status)>) override;
       void AddNode(::grpc::ClientContext* context, const ::grpc::ByteBuffer* request, ::Empty* response, std::function<void(::grpc::Status)>) override;
-      #ifdef GRPC_CALLBACK_API_NONEXPERIMENTAL
-      void AddNode(::grpc::ClientContext* context, const ::Node* request, ::Empty* response, ::grpc::ClientUnaryReactor* reactor) override;
-      #else
       void AddNode(::grpc::ClientContext* context, const ::Node* request, ::Empty* response, ::grpc::experimental::ClientUnaryReactor* reactor) override;
-      #endif
-      #ifdef GRPC_CALLBACK_API_NONEXPERIMENTAL
-      void AddNode(::grpc::ClientContext* context, const ::grpc::ByteBuffer* request, ::Empty* response, ::grpc::ClientUnaryReactor* reactor) override;
-      #else
       void AddNode(::grpc::ClientContext* context, const ::grpc::ByteBuffer* request, ::Empty* response, ::grpc::experimental::ClientUnaryReactor* reactor) override;
-      #endif
       void DeleteNode(::grpc::ClientContext* context, const ::Node* request, ::Empty* response, std::function<void(::grpc::Status)>) override;
       void DeleteNode(::grpc::ClientContext* context, const ::grpc::ByteBuffer* request, ::Empty* response, std::function<void(::grpc::Status)>) override;
-      #ifdef GRPC_CALLBACK_API_NONEXPERIMENTAL
-      void DeleteNode(::grpc::ClientContext* context, const ::Node* request, ::Empty* response, ::grpc::ClientUnaryReactor* reactor) override;
-      #else
       void DeleteNode(::grpc::ClientContext* context, const ::Node* request, ::Empty* response, ::grpc::experimental::ClientUnaryReactor* reactor) override;
-      #endif
-      #ifdef GRPC_CALLBACK_API_NONEXPERIMENTAL
-      void DeleteNode(::grpc::ClientContext* context, const ::grpc::ByteBuffer* request, ::Empty* response, ::grpc::ClientUnaryReactor* reactor) override;
-      #else
       void DeleteNode(::grpc::ClientContext* context, const ::grpc::ByteBuffer* request, ::Empty* response, ::grpc::experimental::ClientUnaryReactor* reactor) override;
-      #endif
       void SearchKNN(::grpc::ClientContext* context, const ::Node* request, ::SearchResult* response, std::function<void(::grpc::Status)>) override;
       void SearchKNN(::grpc::ClientContext* context, const ::grpc::ByteBuffer* request, ::SearchResult* response, std::function<void(::grpc::Status)>) override;
-      #ifdef GRPC_CALLBACK_API_NONEXPERIMENTAL
-      void SearchKNN(::grpc::ClientContext* context, const ::Node* request, ::SearchResult* response, ::grpc::ClientUnaryReactor* reactor) override;
-      #else
       void SearchKNN(::grpc::ClientContext* context, const ::Node* request, ::SearchResult* response, ::grpc::experimental::ClientUnaryReactor* reactor) override;
-      #endif
-      #ifdef GRPC_CALLBACK_API_NONEXPERIMENTAL
-      void SearchKNN(::grpc::ClientContext* context, const ::grpc::ByteBuffer* request, ::SearchResult* response, ::grpc::ClientUnaryReactor* reactor) override;
-      #else
       void SearchKNN(::grpc::ClientContext* context, const ::grpc::ByteBuffer* request, ::SearchResult* response, ::grpc::experimental::ClientUnaryReactor* reactor) override;
-      #endif
      private:
       friend class Stub;
       explicit experimental_async(Stub* stub): stub_(stub) { }
@@ -335,28 +276,13 @@ class DistributedHNSW final {
     void BaseClassMustBeDerivedFromService(const Service* /*service*/) {}
    public:
     ExperimentalWithCallbackMethod_Join() {
-    #ifdef GRPC_CALLBACK_API_NONEXPERIMENTAL
-      ::grpc::Service::
-    #else
-      ::grpc::Service::experimental().
-    #endif
-        MarkMethodCallback(0,
-          new ::grpc_impl::internal::CallbackUnaryHandler< ::JoinRequest, ::JoinResponse>(
-            [this](
-    #ifdef GRPC_CALLBACK_API_NONEXPERIMENTAL
-                   ::grpc::CallbackServerContext*
-    #else
-                   ::grpc::experimental::CallbackServerContext*
-    #endif
-                     context, const ::JoinRequest* request, ::JoinResponse* response) { return this->Join(context, request, response); }));}
+      ::grpc::Service::experimental().MarkMethodCallback(0,
+        new ::grpc_impl::internal::CallbackUnaryHandler< ::JoinRequest, ::JoinResponse>(
+          [this](::grpc::experimental::CallbackServerContext* context, const ::JoinRequest* request, ::JoinResponse* response) { return this->Join(context, request, response); }));}
     void SetMessageAllocatorFor_Join(
         ::grpc::experimental::MessageAllocator< ::JoinRequest, ::JoinResponse>* allocator) {
-    #ifdef GRPC_CALLBACK_API_NONEXPERIMENTAL
-      ::grpc::internal::MethodHandler* const handler = ::grpc::Service::GetHandler(0);
-    #else
-      ::grpc::internal::MethodHandler* const handler = ::grpc::Service::experimental().GetHandler(0);
-    #endif
-      static_cast<::grpc_impl::internal::CallbackUnaryHandler< ::JoinRequest, ::JoinResponse>*>(handler)
+      static_cast<::grpc_impl::internal::CallbackUnaryHandler< ::JoinRequest, ::JoinResponse>*>(
+          ::grpc::Service::experimental().GetHandler(0))
               ->SetMessageAllocator(allocator);
     }
     ~ExperimentalWithCallbackMethod_Join() override {
@@ -367,14 +293,7 @@ class DistributedHNSW final {
       abort();
       return ::grpc::Status(::grpc::StatusCode::UNIMPLEMENTED, "");
     }
-    #ifdef GRPC_CALLBACK_API_NONEXPERIMENTAL
-    virtual ::grpc::ServerUnaryReactor* Join(
-      ::grpc::CallbackServerContext* /*context*/, const ::JoinRequest* /*request*/, ::JoinResponse* /*response*/)
-    #else
-    virtual ::grpc::experimental::ServerUnaryReactor* Join(
-      ::grpc::experimental::CallbackServerContext* /*context*/, const ::JoinRequest* /*request*/, ::JoinResponse* /*response*/)
-    #endif
-      { return nullptr; }
+    virtual ::grpc::experimental::ServerUnaryReactor* Join(::grpc::experimental::CallbackServerContext* /*context*/, const ::JoinRequest* /*request*/, ::JoinResponse* /*response*/) { return nullptr; }
   };
   template <class BaseClass>
   class ExperimentalWithCallbackMethod_AddNode : public BaseClass {
@@ -382,28 +301,13 @@ class DistributedHNSW final {
     void BaseClassMustBeDerivedFromService(const Service* /*service*/) {}
    public:
     ExperimentalWithCallbackMethod_AddNode() {
-    #ifdef GRPC_CALLBACK_API_NONEXPERIMENTAL
-      ::grpc::Service::
-    #else
-      ::grpc::Service::experimental().
-    #endif
-        MarkMethodCallback(1,
-          new ::grpc_impl::internal::CallbackUnaryHandler< ::Node, ::Empty>(
-            [this](
-    #ifdef GRPC_CALLBACK_API_NONEXPERIMENTAL
-                   ::grpc::CallbackServerContext*
-    #else
-                   ::grpc::experimental::CallbackServerContext*
-    #endif
-                     context, const ::Node* request, ::Empty* response) { return this->AddNode(context, request, response); }));}
+      ::grpc::Service::experimental().MarkMethodCallback(1,
+        new ::grpc_impl::internal::CallbackUnaryHandler< ::Node, ::Empty>(
+          [this](::grpc::experimental::CallbackServerContext* context, const ::Node* request, ::Empty* response) { return this->AddNode(context, request, response); }));}
     void SetMessageAllocatorFor_AddNode(
         ::grpc::experimental::MessageAllocator< ::Node, ::Empty>* allocator) {
-    #ifdef GRPC_CALLBACK_API_NONEXPERIMENTAL
-      ::grpc::internal::MethodHandler* const handler = ::grpc::Service::GetHandler(1);
-    #else
-      ::grpc::internal::MethodHandler* const handler = ::grpc::Service::experimental().GetHandler(1);
-    #endif
-      static_cast<::grpc_impl::internal::CallbackUnaryHandler< ::Node, ::Empty>*>(handler)
+      static_cast<::grpc_impl::internal::CallbackUnaryHandler< ::Node, ::Empty>*>(
+          ::grpc::Service::experimental().GetHandler(1))
               ->SetMessageAllocator(allocator);
     }
     ~ExperimentalWithCallbackMethod_AddNode() override {
@@ -414,14 +318,7 @@ class DistributedHNSW final {
       abort();
       return ::grpc::Status(::grpc::StatusCode::UNIMPLEMENTED, "");
     }
-    #ifdef GRPC_CALLBACK_API_NONEXPERIMENTAL
-    virtual ::grpc::ServerUnaryReactor* AddNode(
-      ::grpc::CallbackServerContext* /*context*/, const ::Node* /*request*/, ::Empty* /*response*/)
-    #else
-    virtual ::grpc::experimental::ServerUnaryReactor* AddNode(
-      ::grpc::experimental::CallbackServerContext* /*context*/, const ::Node* /*request*/, ::Empty* /*response*/)
-    #endif
-      { return nullptr; }
+    virtual ::grpc::experimental::ServerUnaryReactor* AddNode(::grpc::experimental::CallbackServerContext* /*context*/, const ::Node* /*request*/, ::Empty* /*response*/) { return nullptr; }
   };
   template <class BaseClass>
   class ExperimentalWithCallbackMethod_DeleteNode : public BaseClass {
@@ -429,28 +326,13 @@ class DistributedHNSW final {
     void BaseClassMustBeDerivedFromService(const Service* /*service*/) {}
    public:
     ExperimentalWithCallbackMethod_DeleteNode() {
-    #ifdef GRPC_CALLBACK_API_NONEXPERIMENTAL
-      ::grpc::Service::
-    #else
-      ::grpc::Service::experimental().
-    #endif
-        MarkMethodCallback(2,
-          new ::grpc_impl::internal::CallbackUnaryHandler< ::Node, ::Empty>(
-            [this](
-    #ifdef GRPC_CALLBACK_API_NONEXPERIMENTAL
-                   ::grpc::CallbackServerContext*
-    #else
-                   ::grpc::experimental::CallbackServerContext*
-    #endif
-                     context, const ::Node* request, ::Empty* response) { return this->DeleteNode(context, request, response); }));}
+      ::grpc::Service::experimental().MarkMethodCallback(2,
+        new ::grpc_impl::internal::CallbackUnaryHandler< ::Node, ::Empty>(
+          [this](::grpc::experimental::CallbackServerContext* context, const ::Node* request, ::Empty* response) { return this->DeleteNode(context, request, response); }));}
     void SetMessageAllocatorFor_DeleteNode(
         ::grpc::experimental::MessageAllocator< ::Node, ::Empty>* allocator) {
-    #ifdef GRPC_CALLBACK_API_NONEXPERIMENTAL
-      ::grpc::internal::MethodHandler* const handler = ::grpc::Service::GetHandler(2);
-    #else
-      ::grpc::internal::MethodHandler* const handler = ::grpc::Service::experimental().GetHandler(2);
-    #endif
-      static_cast<::grpc_impl::internal::CallbackUnaryHandler< ::Node, ::Empty>*>(handler)
+      static_cast<::grpc_impl::internal::CallbackUnaryHandler< ::Node, ::Empty>*>(
+          ::grpc::Service::experimental().GetHandler(2))
               ->SetMessageAllocator(allocator);
     }
     ~ExperimentalWithCallbackMethod_DeleteNode() override {
@@ -461,14 +343,7 @@ class DistributedHNSW final {
       abort();
       return ::grpc::Status(::grpc::StatusCode::UNIMPLEMENTED, "");
     }
-    #ifdef GRPC_CALLBACK_API_NONEXPERIMENTAL
-    virtual ::grpc::ServerUnaryReactor* DeleteNode(
-      ::grpc::CallbackServerContext* /*context*/, const ::Node* /*request*/, ::Empty* /*response*/)
-    #else
-    virtual ::grpc::experimental::ServerUnaryReactor* DeleteNode(
-      ::grpc::experimental::CallbackServerContext* /*context*/, const ::Node* /*request*/, ::Empty* /*response*/)
-    #endif
-      { return nullptr; }
+    virtual ::grpc::experimental::ServerUnaryReactor* DeleteNode(::grpc::experimental::CallbackServerContext* /*context*/, const ::Node* /*request*/, ::Empty* /*response*/) { return nullptr; }
   };
   template <class BaseClass>
   class ExperimentalWithCallbackMethod_SearchKNN : public BaseClass {
@@ -476,28 +351,13 @@ class DistributedHNSW final {
     void BaseClassMustBeDerivedFromService(const Service* /*service*/) {}
    public:
     ExperimentalWithCallbackMethod_SearchKNN() {
-    #ifdef GRPC_CALLBACK_API_NONEXPERIMENTAL
-      ::grpc::Service::
-    #else
-      ::grpc::Service::experimental().
-    #endif
-        MarkMethodCallback(3,
-          new ::grpc_impl::internal::CallbackUnaryHandler< ::Node, ::SearchResult>(
-            [this](
-    #ifdef GRPC_CALLBACK_API_NONEXPERIMENTAL
-                   ::grpc::CallbackServerContext*
-    #else
-                   ::grpc::experimental::CallbackServerContext*
-    #endif
-                     context, const ::Node* request, ::SearchResult* response) { return this->SearchKNN(context, request, response); }));}
+      ::grpc::Service::experimental().MarkMethodCallback(3,
+        new ::grpc_impl::internal::CallbackUnaryHandler< ::Node, ::SearchResult>(
+          [this](::grpc::experimental::CallbackServerContext* context, const ::Node* request, ::SearchResult* response) { return this->SearchKNN(context, request, response); }));}
     void SetMessageAllocatorFor_SearchKNN(
         ::grpc::experimental::MessageAllocator< ::Node, ::SearchResult>* allocator) {
-    #ifdef GRPC_CALLBACK_API_NONEXPERIMENTAL
-      ::grpc::internal::MethodHandler* const handler = ::grpc::Service::GetHandler(3);
-    #else
-      ::grpc::internal::MethodHandler* const handler = ::grpc::Service::experimental().GetHandler(3);
-    #endif
-      static_cast<::grpc_impl::internal::CallbackUnaryHandler< ::Node, ::SearchResult>*>(handler)
+      static_cast<::grpc_impl::internal::CallbackUnaryHandler< ::Node, ::SearchResult>*>(
+          ::grpc::Service::experimental().GetHandler(3))
               ->SetMessageAllocator(allocator);
     }
     ~ExperimentalWithCallbackMethod_SearchKNN() override {
@@ -508,19 +368,8 @@ class DistributedHNSW final {
       abort();
       return ::grpc::Status(::grpc::StatusCode::UNIMPLEMENTED, "");
     }
-    #ifdef GRPC_CALLBACK_API_NONEXPERIMENTAL
-    virtual ::grpc::ServerUnaryReactor* SearchKNN(
-      ::grpc::CallbackServerContext* /*context*/, const ::Node* /*request*/, ::SearchResult* /*response*/)
-    #else
-    virtual ::grpc::experimental::ServerUnaryReactor* SearchKNN(
-      ::grpc::experimental::CallbackServerContext* /*context*/, const ::Node* /*request*/, ::SearchResult* /*response*/)
-    #endif
-      { return nullptr; }
+    virtual ::grpc::experimental::ServerUnaryReactor* SearchKNN(::grpc::experimental::CallbackServerContext* /*context*/, const ::Node* /*request*/, ::SearchResult* /*response*/) { return nullptr; }
   };
-  #ifdef GRPC_CALLBACK_API_NONEXPERIMENTAL
-  typedef ExperimentalWithCallbackMethod_Join<ExperimentalWithCallbackMethod_AddNode<ExperimentalWithCallbackMethod_DeleteNode<ExperimentalWithCallbackMethod_SearchKNN<Service > > > > CallbackService;
-  #endif
-
   typedef ExperimentalWithCallbackMethod_Join<ExperimentalWithCallbackMethod_AddNode<ExperimentalWithCallbackMethod_DeleteNode<ExperimentalWithCallbackMethod_SearchKNN<Service > > > > ExperimentalCallbackService;
   template <class BaseClass>
   class WithGenericMethod_Join : public BaseClass {
@@ -676,20 +525,9 @@ class DistributedHNSW final {
     void BaseClassMustBeDerivedFromService(const Service* /*service*/) {}
    public:
     ExperimentalWithRawCallbackMethod_Join() {
-    #ifdef GRPC_CALLBACK_API_NONEXPERIMENTAL
-      ::grpc::Service::
-    #else
-      ::grpc::Service::experimental().
-    #endif
-        MarkMethodRawCallback(0,
-          new ::grpc_impl::internal::CallbackUnaryHandler< ::grpc::ByteBuffer, ::grpc::ByteBuffer>(
-            [this](
-    #ifdef GRPC_CALLBACK_API_NONEXPERIMENTAL
-                   ::grpc::CallbackServerContext*
-    #else
-                   ::grpc::experimental::CallbackServerContext*
-    #endif
-                     context, const ::grpc::ByteBuffer* request, ::grpc::ByteBuffer* response) { return this->Join(context, request, response); }));
+      ::grpc::Service::experimental().MarkMethodRawCallback(0,
+        new ::grpc_impl::internal::CallbackUnaryHandler< ::grpc::ByteBuffer, ::grpc::ByteBuffer>(
+          [this](::grpc::experimental::CallbackServerContext* context, const ::grpc::ByteBuffer* request, ::grpc::ByteBuffer* response) { return this->Join(context, request, response); }));
     }
     ~ExperimentalWithRawCallbackMethod_Join() override {
       BaseClassMustBeDerivedFromService(this);
@@ -699,14 +537,7 @@ class DistributedHNSW final {
       abort();
       return ::grpc::Status(::grpc::StatusCode::UNIMPLEMENTED, "");
     }
-    #ifdef GRPC_CALLBACK_API_NONEXPERIMENTAL
-    virtual ::grpc::ServerUnaryReactor* Join(
-      ::grpc::CallbackServerContext* /*context*/, const ::grpc::ByteBuffer* /*request*/, ::grpc::ByteBuffer* /*response*/)
-    #else
-    virtual ::grpc::experimental::ServerUnaryReactor* Join(
-      ::grpc::experimental::CallbackServerContext* /*context*/, const ::grpc::ByteBuffer* /*request*/, ::grpc::ByteBuffer* /*response*/)
-    #endif
-      { return nullptr; }
+    virtual ::grpc::experimental::ServerUnaryReactor* Join(::grpc::experimental::CallbackServerContext* /*context*/, const ::grpc::ByteBuffer* /*request*/, ::grpc::ByteBuffer* /*response*/) { return nullptr; }
   };
   template <class BaseClass>
   class ExperimentalWithRawCallbackMethod_AddNode : public BaseClass {
@@ -714,20 +545,9 @@ class DistributedHNSW final {
     void BaseClassMustBeDerivedFromService(const Service* /*service*/) {}
    public:
     ExperimentalWithRawCallbackMethod_AddNode() {
-    #ifdef GRPC_CALLBACK_API_NONEXPERIMENTAL
-      ::grpc::Service::
-    #else
-      ::grpc::Service::experimental().
-    #endif
-        MarkMethodRawCallback(1,
-          new ::grpc_impl::internal::CallbackUnaryHandler< ::grpc::ByteBuffer, ::grpc::ByteBuffer>(
-            [this](
-    #ifdef GRPC_CALLBACK_API_NONEXPERIMENTAL
-                   ::grpc::CallbackServerContext*
-    #else
-                   ::grpc::experimental::CallbackServerContext*
-    #endif
-                     context, const ::grpc::ByteBuffer* request, ::grpc::ByteBuffer* response) { return this->AddNode(context, request, response); }));
+      ::grpc::Service::experimental().MarkMethodRawCallback(1,
+        new ::grpc_impl::internal::CallbackUnaryHandler< ::grpc::ByteBuffer, ::grpc::ByteBuffer>(
+          [this](::grpc::experimental::CallbackServerContext* context, const ::grpc::ByteBuffer* request, ::grpc::ByteBuffer* response) { return this->AddNode(context, request, response); }));
     }
     ~ExperimentalWithRawCallbackMethod_AddNode() override {
       BaseClassMustBeDerivedFromService(this);
@@ -737,14 +557,7 @@ class DistributedHNSW final {
       abort();
       return ::grpc::Status(::grpc::StatusCode::UNIMPLEMENTED, "");
     }
-    #ifdef GRPC_CALLBACK_API_NONEXPERIMENTAL
-    virtual ::grpc::ServerUnaryReactor* AddNode(
-      ::grpc::CallbackServerContext* /*context*/, const ::grpc::ByteBuffer* /*request*/, ::grpc::ByteBuffer* /*response*/)
-    #else
-    virtual ::grpc::experimental::ServerUnaryReactor* AddNode(
-      ::grpc::experimental::CallbackServerContext* /*context*/, const ::grpc::ByteBuffer* /*request*/, ::grpc::ByteBuffer* /*response*/)
-    #endif
-      { return nullptr; }
+    virtual ::grpc::experimental::ServerUnaryReactor* AddNode(::grpc::experimental::CallbackServerContext* /*context*/, const ::grpc::ByteBuffer* /*request*/, ::grpc::ByteBuffer* /*response*/) { return nullptr; }
   };
   template <class BaseClass>
   class ExperimentalWithRawCallbackMethod_DeleteNode : public BaseClass {
@@ -752,20 +565,9 @@ class DistributedHNSW final {
     void BaseClassMustBeDerivedFromService(const Service* /*service*/) {}
    public:
     ExperimentalWithRawCallbackMethod_DeleteNode() {
-    #ifdef GRPC_CALLBACK_API_NONEXPERIMENTAL
-      ::grpc::Service::
-    #else
-      ::grpc::Service::experimental().
-    #endif
-        MarkMethodRawCallback(2,
-          new ::grpc_impl::internal::CallbackUnaryHandler< ::grpc::ByteBuffer, ::grpc::ByteBuffer>(
-            [this](
-    #ifdef GRPC_CALLBACK_API_NONEXPERIMENTAL
-                   ::grpc::CallbackServerContext*
-    #else
-                   ::grpc::experimental::CallbackServerContext*
-    #endif
-                     context, const ::grpc::ByteBuffer* request, ::grpc::ByteBuffer* response) { return this->DeleteNode(context, request, response); }));
+      ::grpc::Service::experimental().MarkMethodRawCallback(2,
+        new ::grpc_impl::internal::CallbackUnaryHandler< ::grpc::ByteBuffer, ::grpc::ByteBuffer>(
+          [this](::grpc::experimental::CallbackServerContext* context, const ::grpc::ByteBuffer* request, ::grpc::ByteBuffer* response) { return this->DeleteNode(context, request, response); }));
     }
     ~ExperimentalWithRawCallbackMethod_DeleteNode() override {
       BaseClassMustBeDerivedFromService(this);
@@ -775,14 +577,7 @@ class DistributedHNSW final {
       abort();
       return ::grpc::Status(::grpc::StatusCode::UNIMPLEMENTED, "");
     }
-    #ifdef GRPC_CALLBACK_API_NONEXPERIMENTAL
-    virtual ::grpc::ServerUnaryReactor* DeleteNode(
-      ::grpc::CallbackServerContext* /*context*/, const ::grpc::ByteBuffer* /*request*/, ::grpc::ByteBuffer* /*response*/)
-    #else
-    virtual ::grpc::experimental::ServerUnaryReactor* DeleteNode(
-      ::grpc::experimental::CallbackServerContext* /*context*/, const ::grpc::ByteBuffer* /*request*/, ::grpc::ByteBuffer* /*response*/)
-    #endif
-      { return nullptr; }
+    virtual ::grpc::experimental::ServerUnaryReactor* DeleteNode(::grpc::experimental::CallbackServerContext* /*context*/, const ::grpc::ByteBuffer* /*request*/, ::grpc::ByteBuffer* /*response*/) { return nullptr; }
   };
   template <class BaseClass>
   class ExperimentalWithRawCallbackMethod_SearchKNN : public BaseClass {
@@ -790,20 +585,9 @@ class DistributedHNSW final {
     void BaseClassMustBeDerivedFromService(const Service* /*service*/) {}
    public:
     ExperimentalWithRawCallbackMethod_SearchKNN() {
-    #ifdef GRPC_CALLBACK_API_NONEXPERIMENTAL
-      ::grpc::Service::
-    #else
-      ::grpc::Service::experimental().
-    #endif
-        MarkMethodRawCallback(3,
-          new ::grpc_impl::internal::CallbackUnaryHandler< ::grpc::ByteBuffer, ::grpc::ByteBuffer>(
-            [this](
-    #ifdef GRPC_CALLBACK_API_NONEXPERIMENTAL
-                   ::grpc::CallbackServerContext*
-    #else
-                   ::grpc::experimental::CallbackServerContext*
-    #endif
-                     context, const ::grpc::ByteBuffer* request, ::grpc::ByteBuffer* response) { return this->SearchKNN(context, request, response); }));
+      ::grpc::Service::experimental().MarkMethodRawCallback(3,
+        new ::grpc_impl::internal::CallbackUnaryHandler< ::grpc::ByteBuffer, ::grpc::ByteBuffer>(
+          [this](::grpc::experimental::CallbackServerContext* context, const ::grpc::ByteBuffer* request, ::grpc::ByteBuffer* response) { return this->SearchKNN(context, request, response); }));
     }
     ~ExperimentalWithRawCallbackMethod_SearchKNN() override {
       BaseClassMustBeDerivedFromService(this);
@@ -813,14 +597,7 @@ class DistributedHNSW final {
       abort();
       return ::grpc::Status(::grpc::StatusCode::UNIMPLEMENTED, "");
     }
-    #ifdef GRPC_CALLBACK_API_NONEXPERIMENTAL
-    virtual ::grpc::ServerUnaryReactor* SearchKNN(
-      ::grpc::CallbackServerContext* /*context*/, const ::grpc::ByteBuffer* /*request*/, ::grpc::ByteBuffer* /*response*/)
-    #else
-    virtual ::grpc::experimental::ServerUnaryReactor* SearchKNN(
-      ::grpc::experimental::CallbackServerContext* /*context*/, const ::grpc::ByteBuffer* /*request*/, ::grpc::ByteBuffer* /*response*/)
-    #endif
-      { return nullptr; }
+    virtual ::grpc::experimental::ServerUnaryReactor* SearchKNN(::grpc::experimental::CallbackServerContext* /*context*/, const ::grpc::ByteBuffer* /*request*/, ::grpc::ByteBuffer* /*response*/) { return nullptr; }
   };
   template <class BaseClass>
   class WithStreamedUnaryMethod_Join : public BaseClass {

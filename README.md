@@ -1,6 +1,8 @@
 # Distributed Hierarchical Navigable Small World (HNSW)
 
-### Compiling protobuf definitions
+### Building the project
 ```
-docker run --rm -v $(pwd):/hnsw -w /hnsw grpc/cxx make
+mkdir build && cd build
+cmake ..
+make
 ```

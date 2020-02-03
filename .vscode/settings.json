@@ -78,6 +78,24 @@
         "regex": "cpp",
         "set": "cpp",
         "stack": "cpp",
-        "variant": "cpp"
+        "variant": "cpp",
+        "__errc": "cpp",
+        "__node_handle": "cpp",
+        "__sso_allocator": "cpp",
+        "__std_stream": "cpp",
+        "any": "cpp",
+        "bit": "cpp",
+        "cfenv": "cpp",
+        "codecvt": "cpp",
+        "csetjmp": "cpp",
+        "csignal": "cpp",
+        "coroutine": "cpp",
+        "propagate_const": "cpp",
+        "forward_list": "cpp",
+        "scoped_allocator": "cpp",
+        "shared_mutex": "cpp",
+        "strstream": "cpp",
+        "typeindex": "cpp",
+        "valarray": "cpp"
     }
 }

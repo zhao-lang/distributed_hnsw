@@ -10,7 +10,6 @@
 
 typedef float sim_t;
 typedef std::vector<float> data_t;
-typedef hnsw::BasicNode<data_t,sim_t> node_t;
 typedef std::pair<sim_t,hnsw::Result<data_t>> resultpair_t;
 
 static float sim_func(data_t& a, data_t& b, size_t n) {
@@ -53,13 +52,13 @@ static float sim_func_avx(data_t& a, data_t& b, size_t n) {
         euc1 = _mm256_fmadd_ps(v1, v1, euc1);
 
         const __m256 v2 = _mm256_sub_ps(_mm256_loadu_ps(&a[i + 8]), _mm256_loadu_ps(&b[i + 8]));
-        euc1 = _mm256_fmadd_ps(v2, v2, euc2);
+        euc2 = _mm256_fmadd_ps(v2, v2, euc2);
 
         const __m256 v3 = _mm256_sub_ps(_mm256_loadu_ps(&a[i + 16]), _mm256_loadu_ps(&b[i + 16]));
-        euc1 = _mm256_fmadd_ps(v3, v3, euc3);
+        euc3 = _mm256_fmadd_ps(v3, v3, euc3);
 
         const __m256 v4 = _mm256_sub_ps(_mm256_loadu_ps(&a[i + 24]), _mm256_loadu_ps(&b[i + 24]));
-        euc1 = _mm256_fmadd_ps(v4, v4, euc4);
+        euc4 = _mm256_fmadd_ps(v4, v4, euc4);
     }
 
     float res = hsum256_ps_avx(_mm256_add_ps(_mm256_add_ps(euc1, euc2), _mm256_add_ps(euc3, euc4)));
@@ -73,7 +72,7 @@ int main() {
     hnsw::METRICFUNC<sim_t,data_t> mfunc = sim_func_avx;
     size_t data_dim = 512;
 
-    hnsw::Index<sim_t,data_t,node_t> index (mfunc, data_dim, 5, 10);
+    hnsw::Index<sim_t,data_t> index (mfunc, data_dim, 5, 10);
 
     std::cout << "Number of nodes: " << index.getNodeCount() << std::endl;
     std::cout << "Number of layers: " << index.getLayerCount() << std::endl;

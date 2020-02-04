@@ -29,9 +29,9 @@ namespace hnsw {
     
 
     template<typename sim_t,
-             typename data_t,
-             typename node_t>
+             typename data_t>
     class Index {
+        using node_t = BasicNode<data_t,sim_t>;
         using distpair_t = std::pair<sim_t,node_t*>;
 
         struct CompareByFirstLess {

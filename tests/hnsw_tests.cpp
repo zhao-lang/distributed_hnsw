@@ -5,7 +5,6 @@
 
 typedef float sim_t;
 typedef std::vector<float> data_t;
-typedef hnsw::BasicNode<data_t,sim_t> node_t;
 typedef std::pair<sim_t,hnsw::Result<data_t>> resultpair_t;
 
 static float sim_func(data_t& a, data_t& b, size_t n) {
@@ -19,7 +18,7 @@ static float sim_func(data_t& a, data_t& b, size_t n) {
 
 hnsw::METRICFUNC<sim_t,data_t> mfunc = sim_func;
 size_t data_dim = 5;
-hnsw::Index<sim_t,data_t,node_t> hindex (mfunc, data_dim, 5, 10);
+hnsw::Index<sim_t,data_t> hindex (mfunc, data_dim, 5, 10);
 
 
 TEST_CASE("Index attributes should update correctly") {

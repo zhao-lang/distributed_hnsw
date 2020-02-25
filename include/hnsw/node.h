@@ -36,12 +36,8 @@ namespace hnsw {
             return id;
         }
 
-        inline void lock() {
-            guard_.lock();
-        }
-
-        inline void unlock() {
-            guard_.unlock();
+        inline std::mutex* getGuard() {
+            return &guard_;
         }
 
         using distpair_t = std::pair<sim_t,BasicNode<data_t,sim_t>*>;

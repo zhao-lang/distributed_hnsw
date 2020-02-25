@@ -83,17 +83,11 @@ namespace hnsw {
 
         void addNode(size_t id, data_t data) {
             if (node_count_ == 0) {
-                nodes_guard_.lock();
+                std::scoped_lock(nodes_guard_, node_count_guard_, enterpoint_guard_);
+
                 nodes[id] = std::unique_ptr<node_t> (new node_t(id, data));
-                nodes_guard_.unlock();
-
-                node_count_guard_.lock();
                 node_count_++;
-                node_count_guard_.unlock();
-
-                enterpoint_guard_.lock();
                 enterpoint = nodes[id].get();
-                enterpoint_guard_.unlock();
 
                 return;
             }
@@ -113,13 +107,9 @@ namespace hnsw {
                     deleteNodeNeighbors(nodes[id].get(), Mmax_, lc);
                 }
 
-                nodes_guard_.lock();
+                std::scoped_lock(nodes_guard_, node_count_guard_);
                 nodes.erase(id);
-                nodes_guard_.unlock();
-
-                node_count_guard_.lock();
                 node_count_--;
-                node_count_guard_.unlock();
             }
         }
 
@@ -176,13 +166,11 @@ namespace hnsw {
             size_t L = max_layer_;
             size_t l = genRandomLevel(level_mult);
 
-            nodes_guard_.lock();
-            nodes[id] = std::unique_ptr<node_t> (new node_t(id, data));
-            nodes_guard_.unlock();
-
-            node_count_guard_.lock();
-            node_count_++;
-            node_count_guard_.unlock();
+            {
+                std::scoped_lock(nodes_guard_, node_count_guard_);
+                nodes[id] = std::unique_ptr<node_t> (new node_t(id, data));
+                node_count_++;
+            }
 
             size_t lc = L;
             while (lc >= l+1) {
@@ -231,14 +219,9 @@ namespace hnsw {
             }
 
             if (l > L) {
-                max_layer_guard_.lock();
+                std::scoped_lock(max_layer_guard_, enterpoint_guard_);
                 max_layer_ = l;
-                max_layer_guard_.unlock();
-
-                // set enterpoint
-                enterpoint_guard_.lock();
                 enterpoint = nodes[id].get();
-                enterpoint_guard_.unlock();
             }
         }
 
@@ -270,11 +253,12 @@ namespace hnsw {
                 }
 
                 // update C and W
-                cpair.second->lock();
-                while (cpair.second->neighbors.size() < level+1) {
-                    cpair.second->neighbors.push_back(std::unordered_map<size_t,distpair_t>());
+                {
+                    std::scoped_lock(*cpair.second->getGuard());
+                    while (cpair.second->neighbors.size() < level+1) {
+                        cpair.second->neighbors.push_back(std::unordered_map<size_t,distpair_t>());
+                    }
                 }
-                cpair.second->unlock();
                 for (auto & emap : cpair.second->neighbors[level]) {
                     distpair_t e = emap.second;
                     size_t eid = e.second->getID();
@@ -371,7 +355,7 @@ namespace hnsw {
         }
 
         void connect_neighbors(node_t* q, queue_desc_t neighbors, size_t level) {
-            q->lock();
+            std::scoped_lock(*q->getGuard());
 
             while (q->neighbors.size() < level+1) {
                 q->neighbors.push_back(std::unordered_map<size_t,distpair_t>());
@@ -381,7 +365,7 @@ namespace hnsw {
                 distpair_t npair = neighbors.top();
                 neighbors.pop();
 
-                npair.second->lock();
+                std::scoped_lock(*npair.second->getGuard());
 
                 while (npair.second->neighbors.size() < level+1) {
                     npair.second->neighbors.push_back(std::unordered_map<size_t,distpair_t>());
@@ -389,22 +373,17 @@ namespace hnsw {
 
                 q->neighbors[level][npair.second->getID()] = npair;
                 npair.second->neighbors[level][q->getID()] = distpair_t(npair.first,q);
-
-                npair.second->unlock();
             }
-
-            q->unlock();
         }
 
         void update_node_connections(node_t* node, queue_desc_t& nodeConn, size_t lc) {
-            node->lock();
+            std::scoped_lock(*node->getGuard());
             node->neighbors[lc].clear();
             while (nodeConn.size() > 0) {
                 distpair_t newpair = nodeConn.top();
                 nodeConn.pop();
                 node->neighbors[lc][newpair.second->getID()] = newpair;
             }
-            node->unlock();
         }
 
         void deleteNodeNeighbors(node_t* node, size_t Mmax, size_t lc) {

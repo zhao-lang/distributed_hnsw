@@ -6,6 +6,7 @@
 
 #include "pb/distributed_hnsw.grpc.pb.h"
 #include "core/core.h"
+#include "cluster/cluster.h"
 
 using grpc::Status;
 using grpc::ServerContext;
@@ -13,7 +14,7 @@ using grpc::ServerBuilder;
 using grpc::Server;
 
 
-class DistributedHNSWServiceImpl final : public DistributedHNSW::Service, public hnswcore::HNSWCore {
+class DistributedHNSWServiceImpl final : public DistributedHNSW::Service, public server::HNSWCore, public server::Cluster {
     Status Join(ServerContext* context, const JoinRequest* request, JoinResponse* response) override {
         return Status::OK;
     }

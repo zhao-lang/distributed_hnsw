@@ -56,7 +56,8 @@ target_include_directories(dhnsw_examples PUBLIC
                           )
 
 # server executable
-add_executable(server "src/server/main.cpp" ${proto_srcs} ${grpc_srcs})
+add_executable(server "src/server/main.cpp" "src/server/core/core.cpp" "src/server/cluster/cluster.cpp"
+               ${proto_srcs} ${grpc_srcs})
 
 target_link_libraries(server PUBLIC hnsw pb grpc++)
 

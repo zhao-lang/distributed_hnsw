@@ -1,4 +1,5 @@
 #include <iostream>
+#include <chrono>
 #include <memory>
 #include <string>
 #include <vector>
@@ -77,23 +78,39 @@ int main() {
     std::cout << "Number of nodes: " << index.getNodeCount() << std::endl;
     std::cout << "Number of layers: " << index.getLayerCount() << std::endl;
 
+    size_t n = 10000;
+    std::cout << "Adding " << n << " nodes" << std::endl;
+    auto start = std::chrono::steady_clock::now();
     for (size_t i = 0; i < 10000; i++) {
         data_t data (data_dim, float(i));
         size_t id = i;
 
         index.addNode(id, data);
     }
+    auto end = std::chrono::steady_clock::now();
+    std::cout << "Elapsed time: "
+        << std::chrono::duration_cast<std::chrono::milliseconds>(end - start).count()
+        << "ms\n" << std::endl;
 
     std::cout << "Number of nodes: " << index.getNodeCount() << std::endl;
 
-    data_t query (data_dim, 100.0);
+    float datum = 100.0;
+    data_t query (data_dim, datum);
+    start = std::chrono::steady_clock::now();
     std::vector<resultpair_t> res = index.searchKnn(query, 5);
+    end = std::chrono::steady_clock::now();
+
+    std::cout << "Query data: " << data_dim << "x" << datum << "f" << std::endl;
 
     for (auto & r : res) {
         std::cout << "- similarity: " << r.first << ", ID: " << r.second.id << std::endl;
     }
 
     std::cout << "Number of layers: " << index.getLayerCount() << std::endl;
+
+    std::cout << "Elapsed time: "
+        << std::chrono::duration_cast<std::chrono::microseconds>(end - start).count()
+        << "µs\n" << std::endl;
 
     return 0;
 }

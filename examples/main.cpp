@@ -67,7 +67,7 @@ static float sim_func_avx(data_t& a, data_t& b, size_t n) {
     return -res;
 } 
 
-int main() {
+int main(int argc, char** argv) {
 
     // hnsw::METRICFUNC<sim_t,data_t> mfunc = sim_func;
     hnsw::METRICFUNC<sim_t,data_t> mfunc = sim_func_avx;
@@ -78,10 +78,10 @@ int main() {
     std::cout << "Number of nodes: " << index.getNodeCount() << std::endl;
     std::cout << "Number of layers: " << index.getLayerCount() << std::endl;
 
-    size_t n = 10000;
+    size_t n = atoi(argv[1]);
     std::cout << "Adding " << n << " nodes" << std::endl;
     auto start = std::chrono::steady_clock::now();
-    for (size_t i = 0; i < 10000; i++) {
+    for (size_t i = 0; i < n; i++) {
         data_t data (data_dim, float(i));
         size_t id = i;
 
@@ -107,6 +107,33 @@ int main() {
     }
 
     std::cout << "Number of layers: " << index.getLayerCount() << std::endl;
+
+    std::cout << "Elapsed time: "
+        << std::chrono::duration_cast<std::chrono::microseconds>(end - start).count()
+        << "µs\n" << std::endl;
+
+
+    std::cout << "Naive method O(n) time" << std::endl;
+    std::vector<data_t> index2(n);
+    for (size_t i = 0; i < n; i++) {
+        data_t data (data_dim, float(i));
+        index2[i] = data;
+    }
+
+    start = std::chrono::steady_clock::now();
+    size_t best_id = -1;
+    float best_sim = -INFINITY;
+    for (size_t i = 0; i < n; i++) {
+        data_t data = index2[i];
+        float sim = sim_func_avx(query, data, data_dim);
+        if (sim > best_sim) {
+            best_sim = sim;
+            best_id = i;
+        }
+    }
+    end = std::chrono::steady_clock::now();
+    
+    std::cout << "- similarity: " << best_sim << ", ID: " << best_id << std::endl;
 
     std::cout << "Elapsed time: "
         << std::chrono::duration_cast<std::chrono::microseconds>(end - start).count()
